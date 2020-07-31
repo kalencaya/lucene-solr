@@ -56,11 +56,18 @@ final class DocumentsWriterPerThread {
    * The IndexingChain must define the {@link #getChain(DocumentsWriterPerThread)} method
    * which returns the DocConsumer that the DocumentsWriter calls to process the
    * documents.
+   * IndexingChain一定要定义方法{@link #getChain(DocumentsWriterPerThread)}，方法返回DocConsumer对象，
+   * DocumentsWriter调用DocConsumer对象以处理documents。
    */
   abstract static class IndexingChain {
     abstract DocConsumer getChain(DocumentsWriterPerThread documentsWriterPerThread) throws IOException;
   }
 
+  /**
+   * 因为DWPT会更新内存的到排记录表，将stored fields和term vectors写入文件。如果发生异常如
+   * 磁盘满了，或者VirtualMachineError时，这些异常称作"aborting exceptions"，需要丢弃
+   * 上次flush后的所有更新。
+   */
   private Throwable abortingException;
 
   final void onAbortingException(Throwable throwable) {
@@ -75,7 +82,7 @@ final class DocumentsWriterPerThread {
   final boolean isAborted() {
     return aborted;
   }
-  
+
 
   static final IndexingChain defaultIndexingChain = new IndexingChain() {
 
@@ -128,7 +135,8 @@ final class DocumentsWriterPerThread {
   /** Called if we hit an exception at a bad time (when
    *  updating the index files) and must discard all
    *  currently buffered docs.  This resets our state,
-   *  discarding any docs added since last flush. */
+   *  discarding any docs added since last flush.
+   */
   void abort() throws IOException{
     aborted = true;
     pendingNumDocs.addAndGet(-numDocsInRAM);
@@ -153,7 +161,7 @@ final class DocumentsWriterPerThread {
   final DocState docState;
   private final DocConsumer consumer;
   final Counter bytesUsed;
-  
+
   // Updates for our still-in-RAM (to be flushed next) segment
   private final BufferedUpdates pendingUpdates;
   private final SegmentInfo segmentInfo;     // Current segment we are working on
@@ -196,11 +204,11 @@ final class DocumentsWriterPerThread {
     this.deleteQueue = Objects.requireNonNull(deleteQueue);
     assert numDocsInRAM == 0 : "num docs " + numDocsInRAM;
     deleteSlice = deleteQueue.newSlice();
-   
+
     segmentInfo = new SegmentInfo(directoryOrig, Version.LATEST, Version.LATEST, segmentName, -1, false, codec, Collections.emptyMap(), StringHelper.randomId(), Collections.emptyMap(), indexWriterConfig.getIndexSort());
     assert numDocsInRAM == 0;
     if (INFO_VERBOSE && infoStream.isEnabled("DWPT")) {
-      infoStream.message("DWPT", Thread.currentThread().getName() + " init seg=" + segmentName + " delQueue=" + deleteQueue);  
+      infoStream.message("DWPT", Thread.currentThread().getName() + " init seg=" + segmentName + " delQueue=" + deleteQueue);
     }
     this.enableTestPoints = enableTestPoints;
     this.indexVersionCreated = indexVersionCreated;
@@ -208,7 +216,7 @@ final class DocumentsWriterPerThread {
     // it really sucks that we need to pull this within the ctor and pass this ref to the chain!
     consumer = indexWriterConfig.getIndexingChain().getChain(this);
   }
-  
+
   FieldInfos.Builder getFieldInfosBuilder() {
     return fieldInfos;
   }
@@ -274,13 +282,13 @@ final class DocumentsWriterPerThread {
       maybeAbort("updateDocuments", flushNotifications);
     }
   }
-  
+
   private long finishDocuments(DocumentsWriterDeleteQueue.Node<?> deleteNode, int docIdUpTo) {
     /*
      * here we actually finish the document in two steps 1. push the delete into
      * the queue and update our slice. 2. increment the DWPT private document
      * id.
-     * 
+     *
      * the updated slice we get from 1. holds all the deletes that have occurred
      * since we updated the slice the last time.
      */
@@ -475,9 +483,9 @@ final class DocumentsWriterPerThread {
       }
     }
   }
-  
+
   private final Set<String> filesToDelete = new HashSet<>();
-  
+
   Set<String> pendingFilesToDelete() {
     return filesToDelete;
   }
@@ -503,12 +511,12 @@ final class DocumentsWriterPerThread {
     SegmentCommitInfo newSegment = flushedSegment.segmentInfo;
 
     IndexWriter.setDiagnostics(newSegment.info, IndexWriter.SOURCE_FLUSH);
-    
+
     IOContext context = new IOContext(new FlushInfo(newSegment.info.maxDoc(), newSegment.sizeInBytes()));
 
     boolean success = false;
     try {
-      
+
       if (indexWriterConfig.getUseCompoundFile()) {
         Set<String> originalFiles = newSegment.info.files();
         // TODO: like addIndexes, we are relying on createCompoundFile to successfully cleanup...
@@ -525,7 +533,7 @@ final class DocumentsWriterPerThread {
 
       // TODO: ideally we would freeze newSegment here!!
       // because any changes after writing the .si will be
-      // lost... 
+      // lost...
 
       // Must write deleted docs after the CFS so we don't
       // slurp the del file into CFS:
@@ -544,7 +552,7 @@ final class DocumentsWriterPerThread {
         // shortly-to-be-opened SegmentReader and let it
         // carry the changes; there's no reason to use
         // filesystem as intermediary here.
-          
+
         SegmentCommitInfo info = flushedSegment.segmentInfo;
         Codec codec = info.info.getCodec();
         final FixedBitSet bits;
@@ -589,12 +597,12 @@ final class DocumentsWriterPerThread {
 
   private static class IntBlockAllocator extends IntBlockPool.Allocator {
     private final Counter bytesUsed;
-    
+
     public IntBlockAllocator(Counter bytesUsed) {
       super(IntBlockPool.INT_BLOCK_SIZE);
       this.bytesUsed = bytesUsed;
     }
-    
+
     /* Allocate another int[] from the shared pool */
     @Override
     public int[] getIntBlock() {
@@ -602,14 +610,14 @@ final class DocumentsWriterPerThread {
       bytesUsed.addAndGet(IntBlockPool.INT_BLOCK_SIZE * Integer.BYTES);
       return b;
     }
-    
+
     @Override
     public void recycleIntBlocks(int[][] blocks, int offset, int length) {
       bytesUsed.addAndGet(-(length * (IntBlockPool.INT_BLOCK_SIZE * Integer.BYTES)));
     }
-    
+
   }
-  
+
   @Override
   public String toString() {
     return "DocumentsWriterPerThread [pendingDeletes=" + pendingUpdates

@@ -84,13 +84,13 @@ import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
 /**
   An <code>IndexWriter</code> creates and maintains an index.
 
-  <p>The {@link OpenMode} option on 
-  {@link IndexWriterConfig#setOpenMode(OpenMode)} determines 
+  <p>The {@link OpenMode} option on
+  {@link IndexWriterConfig#setOpenMode(OpenMode)} determines
   whether a new index is created, or whether an existing index is
   opened. Note that you can open an index with {@link OpenMode#CREATE}
-  even while readers are using the index. The old readers will 
-  continue to search the "point in time" snapshot they had opened, 
-  and won't see the newly created index until they re-open. If 
+  even while readers are using the index. The old readers will
+  continue to search the "point in time" snapshot they had opened,
+  and won't see the newly created index until they re-open. If
   {@link OpenMode#CREATE_OR_APPEND} is used IndexWriter will create a
   new index if there is not already an index at the provided path
   and otherwise open the existing index.</p>
@@ -99,7 +99,7 @@ import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
   addDocument} and removed with {@link #deleteDocuments(Term...)} or {@link
   #deleteDocuments(Query...)}. A document can be updated with {@link
   #updateDocument(Term, Iterable) updateDocument} (which just deletes
-  and then adds the entire document). When finished adding, deleting 
+  and then adds the entire document). When finished adding, deleting
   and updating documents, {@link #close() close} should be called.</p>
 
   <a id="sequence_numbers"></a>
@@ -121,7 +121,7 @@ import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
   {@link IndexWriterConfig#DEFAULT_RAM_BUFFER_SIZE_MB} MB. For
   best indexing speed you should flush by RAM usage with a
   large RAM buffer.
-  In contrast to the other flush options {@link IndexWriterConfig#setRAMBufferSizeMB} and 
+  In contrast to the other flush options {@link IndexWriterConfig#setRAMBufferSizeMB} and
   {@link IndexWriterConfig#setMaxBufferedDocs(int)}, deleted terms
   won't trigger a segment flush. Note that flushing just moves the
   internal buffered state in IndexWriter into the index, but
@@ -135,7 +135,7 @@ import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
   <p>Opening an <code>IndexWriter</code> creates a lock file for the directory in use. Trying to open
   another <code>IndexWriter</code> on the same directory will lead to a
   {@link LockObtainFailedException}.</p>
-  
+
   <a id="deletionPolicy"></a>
   <p>Expert: <code>IndexWriter</code> allows an optional
   {@link IndexDeletionPolicy} implementation to be specified.  You
@@ -173,7 +173,7 @@ import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
   VirtualMachineError, or disaster strikes during a checkpoint
   then IndexWriter will close itself.  This is a
   defensive measure in case any internal state (buffered
-  documents, deletions, reference counts) were corrupted.  
+  documents, deletions, reference counts) were corrupted.
   Any subsequent calls will throw an AlreadyClosedException.</p>
 
   <a id="thread-safety"></a><p><b>NOTE</b>: {@link
@@ -184,7 +184,7 @@ import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
   synchronize on the <code>IndexWriter</code> instance as
   this may cause deadlock; use your own (non-Lucene) objects
   instead. </p>
-  
+
   <p><b>NOTE</b>: If you call
   <code>Thread.interrupt()</code> on a thread that's within
   IndexWriter, IndexWriter will try to catch this (eg, if
@@ -242,17 +242,21 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
   static int getActualMaxDocs() {
     return IndexWriter.actualMaxDocs;
   }
-  
+
   /** Used only for testing. */
   private final boolean enableTestPoints;
 
   private static final int UNBOUNDED_MAX_MERGE_SEGMENTS = -1;
-  
+
   /**
    * Name of the write lock in the index.
    */
   public static final String WRITE_LOCK_NAME = "write.lock";
 
+  /**
+   * SOURCE可能表示segment的来源，SOURCE_MERGE、SOURCE_FLUSH和SOURCE_ADDINDEXES_READERS
+   * 可能是SOURCE的值，关系为SOURCE ->SOURCE_MERGE|SOURCE_FLUSH|SOURCE_ADDINDEXES_READERS
+   */
   /** Key for the source of a segment in the {@link SegmentInfo#getDiagnostics() diagnostics}. */
   public static final String SOURCE = "source";
   /** Source of a segment which results from a merge of other segments. */
@@ -276,7 +280,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    * Maximum length string for a stored field.
    */
   public final static int MAX_STORED_STRING_LENGTH = ArrayUtil.MAX_ARRAY_LENGTH / UnicodeUtil.MAX_UTF8_BYTES_PER_CHAR;
-    
+
   // when unrecoverable disaster strikes, we populate this with the reason that we had to close IndexWriter
   private final AtomicReference<Throwable> tragedy = new AtomicReference<>(null);
 
@@ -548,9 +552,9 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     doBeforeFlush();
     boolean anyChanges = false;
     /*
-     * for releasing a NRT reader we must ensure that 
+     * for releasing a NRT reader we must ensure that
      * DW doesn't add any segments or deletes until we are
-     * done with creating the NRT DirectoryReader. 
+     * done with creating the NRT DirectoryReader.
      * We release the two stage full flush after we are done opening the
      * directory reader!
      */
@@ -585,7 +589,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
             // Prevent segmentInfos from changing while opening the
             // reader; in theory we could instead do similar retry logic,
             // just like we do when loading segments_N
-            
+
             r = StandardDirectoryReader.open(this, segmentInfos, applyAllDeletes, writeAllDeletes);
             if (infoStream.isEnabled("IW")) {
               infoStream.message("IW", "return reader version=" + r.getVersion() + " reader=" + r);
@@ -705,7 +709,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
   /**
    * Obtain the number of deleted docs for a pooled reader.
-   * If the reader isn't being pooled, the segmentInfo's 
+   * If the reader isn't being pooled, the segmentInfo's
    * delCount is returned.
    */
   @Override
@@ -725,7 +729,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
   /**
    * Used internally to throw an {@link AlreadyClosedException} if this
    * IndexWriter has been closed or is in the process of closing.
-   * 
+   *
    * @param failIfClosing
    *          if true, also fail when {@code IndexWriter} is in the process of
    *          closing ({@code closing=true}) but not yet done closing (
@@ -756,11 +760,11 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    * Constructs a new IndexWriter per the settings given in <code>conf</code>.
    * If you want to make "live" changes to this writer instance, use
    * {@link #getConfig()}.
-   * 
+   *
    * <p>
    * <b>NOTE:</b> after ths writer is created, the given configuration instance
    * cannot be passed to another writer.
-   * 
+   *
    * @param d
    *          the index directory. The index is either created or appended
    *          according <code>conf.getOpenMode()</code>.
@@ -782,7 +786,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     // obtain the write.lock. If the user configured a timeout,
     // we wrap with a sleeper and this might take some time.
     writeLock = d.obtainLock(WRITE_LOCK_NAME);
-    
+
     boolean success = false;
     try {
       directoryOrig = d;
@@ -849,7 +853,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
       } else if (reader != null) {
         // Init from an existing already opened NRT or non-NRT reader:
-      
+
         if (reader.directory() != commit.getDirectory()) {
           throw new IllegalArgumentException("IndexCommit's reader must have the same directory as the IndexCommit");
         }
@@ -858,7 +862,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
           throw new IllegalArgumentException("IndexCommit's reader must have the same directory passed to IndexWriter");
         }
 
-        if (reader.segmentInfos.getLastGeneration() == 0) {  
+        if (reader.segmentInfos.getLastGeneration() == 0) {
           // TODO: maybe we could allow this?  It's tricky...
           throw new IllegalArgumentException("index must already have an initial commit to open from reader");
         }
@@ -906,7 +910,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
           if (commit.getDirectory() != directoryOrig) {
             throw new IllegalArgumentException("IndexCommit's directory doesn't match my directory, expected=" + directoryOrig + ", got=" + commit.getDirectory());
           }
-          
+
           SegmentInfos oldInfos = SegmentInfos.readCommit(directoryOrig, commit.getSegmentsFileName());
           segmentInfos.replace(oldInfos);
           changed();
@@ -1018,7 +1022,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
   static FieldInfos readFieldInfos(SegmentCommitInfo si) throws IOException {
     Codec codec = si.info.getCodec();
     FieldInfosFormat reader = codec.fieldInfosFormat();
-    
+
     if (si.hasFieldUpdates()) {
       // there are updates, we read latest (always outside of CFS)
       final String segmentSuffix = Long.toString(si.getFieldInfosGen(), Character.MAX_RADIX);
@@ -1050,7 +1054,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
     return map;
   }
-  
+
   /**
    * Returns a {@link LiveIndexWriterConfig}, which can be used to query the IndexWriter
    * current settings, as well as modify "live" ones.
@@ -1309,7 +1313,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    * Atomically deletes documents matching the provided
    * delTerm and adds a block of documents with sequentially
    * assigned document IDs, such that an external reader
-   * will see all or none of the documents. 
+   * will see all or none of the documents.
    *
    * See {@link #addDocuments(Iterable)}.
    *
@@ -1665,7 +1669,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    * Updates a document's {@link NumericDocValues} for <code>field</code> to the
    * given <code>value</code>. You can only update fields that already exist in
    * the index, not add new fields through this method.
-   * 
+   *
    * @param term
    *          the term to identify the document(s) to be updated
    * @param field
@@ -1701,11 +1705,11 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    * Updates a document's {@link BinaryDocValues} for <code>field</code> to the
    * given <code>value</code>. You can only update fields that already exist in
    * the index, not add new fields through this method.
-   * 
+   *
    * <p>
    * <b>NOTE:</b> this method currently replaces the existing value of all
    * affected documents with the new value.
-   * 
+   *
    * @param term
    *          the term to identify the document(s) to be updated
    * @param field
@@ -1736,7 +1740,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
       throw tragedy;
     }
   }
-  
+
   /**
    * Updates documents' DocValues fields to the given values. Each field update
    * is applied to the set of documents that are associated with the
@@ -1744,7 +1748,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    * flushed together. If a doc values fields data is <code>null</code> the existing
    * value is removed from all documents matching the term.
    *
-   * 
+   *
    * @param updates
    *          the updates to apply
    *
@@ -1904,7 +1908,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    *
    * @param maxNumSegments maximum number of segments left
    * in the index after merging finishes
-   * 
+   *
    * @throws CorruptIndexException if the index is corrupt
    * @throws IOException if there is a low-level IO error
    * @see MergePolicy#findMerges
@@ -2119,7 +2123,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    * Explicit calls to maybeMerge() are usually not
    * necessary. The most common case is when merge policy
    * parameters have changed.
-   * 
+   *
    * This method will call the {@link MergePolicy} with
    * {@link MergeTrigger#EXPLICIT}.
    */
@@ -2194,7 +2198,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
   /**
    * Expert: the {@link MergeScheduler} calls this method to retrieve the next
    * merge requested by the MergePolicy
-   * 
+   *
    * @lucene.experimental
    */
   private synchronized MergePolicy.OneMerge getNextMerge() {
@@ -2210,7 +2214,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
   /**
    * Expert: returns true if there are merges waiting to be scheduled.
-   * 
+   *
    * @lucene.experimental
    */
   public synchronized boolean hasPendingMerges() {
@@ -2231,7 +2235,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
   @Override
   public void rollback() throws IOException {
     // don't call ensureOpen here: this acts like "close()" in closeable.
-    
+
     // Ensure that only one thread actually gets to do the
     // closing, and make sure no commit is also in progress:
     if (shouldClose(true)) {
@@ -2253,7 +2257,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     if (infoStream.isEnabled("IW")) {
       infoStream.message("IW", "rollback");
     }
-    
+
     try {
       synchronized (this) {
         // must be synced otherwise register merge might throw and exception if stopMerges
@@ -2370,13 +2374,13 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
   /**
    * Delete all documents in the index.
-   * 
+   *
    * <p>
    * This method will drop all buffered documents and will remove all segments
    * from the index. This change will not be visible until a {@link #commit()}
    * has been called. This method can be rolled back using {@link #rollback()}.
    * </p>
-   * 
+   *
    * <p>
    * NOTE: this method is much faster than using deleteDocuments( new
    * MatchAllDocsQuery() ). Yet, this method also has different semantics
@@ -2388,7 +2392,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    * {@link OpenMode#CREATE} which a delete query only marks documents as
    * deleted.
    * </p>
-   * 
+   *
    * <p>
    * NOTE: this method will forcefully abort all merges in progress. If other
    * threads are running {@link #forceMerge}, {@link #addIndexes(CodecReader[])}
@@ -2411,7 +2415,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
      * and keep the thread-states locked, the lockAndAbortAll operation
      * also guarantees "point in time semantics" ie. the checkpoint that we need in terms
      * of logical happens-before relationship in the DW. So we do
-     * abort all in memory structures 
+     * abort all in memory structures
      * We also drop global field numbering before during abort to make
      * sure it's just like a fresh index.
      */
@@ -2783,7 +2787,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
       // Best-effort up front check:
       testReserveDocs(totalMaxDoc);
-        
+
       boolean success = false;
       try {
         for (SegmentInfos sis : commits) {
@@ -2883,18 +2887,18 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
   /**
    * Merges the provided indexes into this index.
-   * 
+   *
    * <p>
    * The provided IndexReaders are not closed.
-   * 
+   *
    * <p>
    * See {@link #addIndexes} for details on transactional semantics, temporary
    * free space required in the Directory, and non-CFS segments on an Exception.
-   * 
+   *
    * <p>
    * <b>NOTE:</b> empty segments are dropped by this method and not added to this
    * index.
-   * 
+   *
    * <p>
    * <b>NOTE:</b> this merges all given {@link LeafReader}s in one
    * merge. If you intend to merge a large number of readers, it may be better
@@ -2902,11 +2906,11 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    * In principle, if you use a merge policy with a {@code mergeFactor} or
    * {@code maxMergeAtOnce} parameter, you should pass that many readers in one
    * call.
-   * 
+   *
    * <p>
    * <b>NOTE:</b> this method does not call or make use of the {@link MergeScheduler},
    * so any custom bandwidth throttling is at the moment ignored.
-   * 
+   *
    * @return The <a href="#sequence_number">sequence number</a>
    * for this operation
    *
@@ -2940,7 +2944,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
             DocValuesFieldExistsQuery.getDocValuesDocIdSetIterator(config.getSoftDeletesField(), leaf), liveDocs);
         }
       }
-      
+
       // Best-effort up front check:
       testReserveDocs(numDocs);
 
@@ -2955,7 +2959,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
                                          false, codec, Collections.emptyMap(), StringHelper.randomId(), Collections.emptyMap(), config.getIndexSort());
 
       SegmentMerger merger = new SegmentMerger(Arrays.asList(readers), info, infoStream, trackingDir,
-                                               globalFieldNumberMap, 
+                                               globalFieldNumberMap,
                                                context);
 
       if (!merger.shouldMerge()) {
@@ -2979,7 +2983,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
       info.setFiles(new HashSet<>(trackingDir.getCreatedFiles()));
       trackingDir.clearCreatedFiles();
-                                         
+
       setDiagnostics(info, SOURCE_ADDINDEXES_READERS);
 
       final MergePolicy mergePolicy = config.getMergePolicy();
@@ -3031,7 +3035,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
         // Now reserve the docs, just before we update SIS:
         reserveDocs(numDocs);
-      
+
         segmentInfos.add(infoPerCommit);
         seqNo = docWriter.getNextSequenceNumber();
         checkpoint();
@@ -3047,10 +3051,10 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
   /** Copies the segment files as-is into the IndexWriter's directory. */
   private SegmentCommitInfo copySegmentAsIs(SegmentCommitInfo info, String segName, IOContext context) throws IOException {
-    
+
     // Same SI as before but we change directory and name
     SegmentInfo newInfo = new SegmentInfo(directoryOrig, info.info.getVersion(), info.info.getMinVersion(), segName, info.info.maxDoc(),
-                                          info.info.getUseCompoundFile(), info.info.getCodec(), 
+                                          info.info.getUseCompoundFile(), info.info.getCodec(),
                                           info.info.getDiagnostics(), info.info.getId(), info.info.getAttributes(), info.info.getIndexSort());
     SegmentCommitInfo newInfoPerCommit = new SegmentCommitInfo(newInfo, info.getDelCount(), info.getSoftDelCount(), info.getDelGen(),
                                                                info.getFieldInfosGen(), info.getDocValuesGen(), info.getId());
@@ -3078,10 +3082,10 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     }
 
     assert copiedFiles.equals(newInfoPerCommit.files()): "copiedFiles=" + copiedFiles + " vs " + newInfoPerCommit.files();
-    
+
     return newInfoPerCommit;
   }
-  
+
   /**
    * A hook for extending classes to execute operations after pending added and
    * deleted documents have been flushed to the Directory but before the change
@@ -3119,7 +3123,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     pendingSeqNo = prepareCommitInternal();
     // we must do this outside of the commitLock else we can deadlock:
     if (maybeMerge.getAndSet(false)) {
-      maybeMerge(config.getMergePolicy(), MergeTrigger.FULL_FLUSH, UNBOUNDED_MAX_MERGE_SEGMENTS);      
+      maybeMerge(config.getMergePolicy(), MergeTrigger.FULL_FLUSH, UNBOUNDED_MAX_MERGE_SEGMENTS);
     }
     return pendingSeqNo;
   }
@@ -3198,7 +3202,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
             publishFlushedSegments(true);
             // cannot pass triggerMerges=true here else it can lead to deadlock:
             processEvents(false);
-            
+
             flushSuccess = true;
 
             applyAllDeletesAndUpdates();
@@ -3234,8 +3238,8 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
               // to commit.  This is important in case, eg, while
               // we are trying to sync all referenced files, a
               // merge completes which would otherwise have
-              // removed the files we are now syncing.    
-              filesToCommit = toCommit.files(false); 
+              // removed the files we are now syncing.
+              filesToCommit = toCommit.files(false);
               deleter.incRef(filesToCommit);
             }
             success = true;
@@ -3257,7 +3261,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
       } finally {
         maybeCloseOnTragicEvent();
       }
-     
+
       try {
         if (anyChanges) {
           maybeMerge.set(true);
@@ -3317,7 +3321,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
       checkpoint();
     }
   }
-  
+
   /**
    * Sets the iterator to provide the commit user data map at commit time.  Calling this method
    * is considered a committable change and will be {@link #commit() committed} even if
@@ -3345,14 +3349,14 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     }
     changeCount.incrementAndGet();
   }
-  
+
   /**
    * Returns the commit user data iterable previously set with {@link #setLiveCommitData(Iterable)}, or null if nothing has been set yet.
    */
   public final synchronized Iterable<Map.Entry<String,String>> getLiveCommitData() {
     return commitUserData;
   }
-  
+
   // Used only by commit and prepareCommit, below; lock
   // order is commitLock -> IW
   private final Object commitLock = new Object();
@@ -3450,9 +3454,9 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
     // we must do this outside of the commitLock else we can deadlock:
     if (maybeMerge.getAndSet(false)) {
-      maybeMerge(mergePolicy, MergeTrigger.FULL_FLUSH, UNBOUNDED_MAX_MERGE_SEGMENTS);      
+      maybeMerge(mergePolicy, MergeTrigger.FULL_FLUSH, UNBOUNDED_MAX_MERGE_SEGMENTS);
     }
-    
+
     return seqNo;
   }
 
@@ -3528,7 +3532,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
   // Ensures only one flush() is actually flushing segments
   // at a time:
   private final Object fullFlushLock = new Object();
-  
+
   /** Moves all in-memory segments to the {@link Directory}, but does not commit
    *  (fsync) them (call {@link #commit} for that). */
   public final void flush() throws IOException {
@@ -3574,7 +3578,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
         infoStream.message("IW", "  index before flush " + segString());
       }
       boolean anyChanges;
-      
+
       synchronized (fullFlushLock) {
         boolean flushSuccess = false;
         try {
@@ -3603,7 +3607,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
       }
 
       anyChanges |= maybeMerge.getAndSet(false);
-      
+
       synchronized(this) {
         writeReaderPool(applyAllDeletes);
         doAfterFlush();
@@ -3622,7 +3626,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
       }
     }
   }
-  
+
   private void applyAllDeletesAndUpdates() throws IOException {
     assert Thread.holdsLock(this) == false;
     flushDeletesCount.incrementAndGet();
@@ -3665,7 +3669,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
   private synchronized ReadersAndUpdates commitMergedDeletesAndUpdates(MergePolicy.OneMerge merge, MergeState mergeState) throws IOException {
 
     mergeFinishedGen.incrementAndGet();
-    
+
     testPoint("startCommitMergeDeletes");
 
     final List<SegmentCommitInfo> sourceSegments = merge.segments;
@@ -3720,7 +3724,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
           if (bufferedUpdatesStream.stillRunning(updates.delGen)) {
             continue;
           }
-              
+
           // sanity check:
           assert field.equals(updates.field);
 
@@ -4013,7 +4017,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
   /**
    * Merges the indicated segments, replacing them in the stack with a
    * single segment.
-   * 
+   *
    * @lucene.experimental
    */
   protected void merge(MergePolicy.OneMerge merge) throws IOException {
@@ -4130,13 +4134,13 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     if (infoStream.isEnabled("IW")) {
       StringBuilder builder = new StringBuilder("registerMerge merging= [");
       for (SegmentCommitInfo info : mergingSegments) {
-        builder.append(info.info.name).append(", ");  
+        builder.append(info.info.name).append(", ");
       }
       builder.append("]");
       // don't call mergingSegments.toString() could lead to ConcurrentModException
       // since merge updates the segments FieldInfos
       if (infoStream.isEnabled("IW")) {
-        infoStream.message("IW", builder.toString());  
+        infoStream.message("IW", builder.toString());
       }
     }
     for(SegmentCommitInfo info : merge.segments) {
@@ -4222,7 +4226,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     if (readerPool.writeDocValuesUpdatesForMerge(merge.segments)) {
       checkpoint();
     }
-    
+
     // Bind a new segment name here so even with
     // ConcurrentMergePolicy we keep deterministic segment
     // names.
@@ -4349,7 +4353,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
     Directory mergeDirectory = mergeScheduler.wrapForMerge(merge, directory);
     List<SegmentCommitInfo> sourceSegments = merge.segments;
-    
+
     IOContext context = new IOContext(merge.getStoreMergeInfo());
 
     final TrackingDirectoryWrapper dirWrapper = new TrackingDirectoryWrapper(mergeDirectory);
@@ -4429,7 +4433,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
       }
       final SegmentMerger merger = new SegmentMerger(mergeReaders,
                                                      merge.info.info, infoStream, dirWrapper,
-                                                     globalFieldNumberMap, 
+                                                     globalFieldNumberMap,
                                                      context);
       merge.info.setSoftDelCount(Math.toIntExact(softDeleteCount.get()));
       merge.checkAborted();
@@ -4450,8 +4454,8 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
           String pauseInfo = merge.getMergeProgress().getPauseTimes().entrySet()
             .stream()
             .filter((e) -> e.getValue() > 0)
-            .map((e) -> String.format(Locale.ROOT, "%.1f sec %s", 
-                e.getValue() / 1000000000., 
+            .map((e) -> String.format(Locale.ROOT, "%.1f sec %s",
+                e.getValue() / 1000000000.,
                 e.getKey().name().toLowerCase(Locale.ROOT)))
             .collect(Collectors.joining(", "));
           if (!pauseInfo.isEmpty()) {
@@ -4463,9 +4467,9 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
           double segmentMB = (merge.info.sizeInBytes()/1024./1024.);
           infoStream.message("IW", "merge codec=" + codec + " maxDoc=" + merge.info.info.maxDoc() + "; merged segment has " +
                              (mergeState.mergeFieldInfos.hasVectors() ? "vectors" : "no vectors") + "; " +
-                             (mergeState.mergeFieldInfos.hasNorms() ? "norms" : "no norms") + "; " + 
-                             (mergeState.mergeFieldInfos.hasDocValues() ? "docValues" : "no docValues") + "; " + 
-                             (mergeState.mergeFieldInfos.hasProx() ? "prox" : "no prox") + "; " + 
+                             (mergeState.mergeFieldInfos.hasNorms() ? "norms" : "no norms") + "; " +
+                             (mergeState.mergeFieldInfos.hasDocValues() ? "docValues" : "no docValues") + "; " +
+                             (mergeState.mergeFieldInfos.hasProx() ? "prox" : "no prox") + "; " +
                              (mergeState.mergeFieldInfos.hasProx() ? "freqs" : "no freqs") + "; " +
                              (mergeState.mergeFieldInfos.hasPointValues() ? "points" : "no points") + "; " +
                              String.format(Locale.ROOT,
@@ -4574,7 +4578,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
       // TODO: ideally we would freeze merge.info here!!
       // because any changes after writing the .si will be
-      // lost... 
+      // lost...
 
       if (infoStream.isEnabled("IW")) {
         infoStream.message("IW", String.format(Locale.ROOT, "merged segment size=%.3f MB vs estimate=%.3f MB", merge.info.sizeInBytes()/1024./1024., merge.estimatedMergeBytes/1024/1024.));
@@ -4672,7 +4676,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
   // called only from assert
   private boolean filesExist(SegmentInfos toSync) throws IOException {
-    
+
     Collection<String> files = toSync.files(false);
     for(final String fileName: files) {
       // If this trips it means we are missing a call to
@@ -4853,7 +4857,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
   /**
    * This method should be called on a tragic event ie. if a downstream class of the writer
-   * hits an unrecoverable exception. This method does not rethrow the tragic event exception. 
+   * hits an unrecoverable exception. This method does not rethrow the tragic event exception.
    * Note: This method will not close the writer but can be called from any location without respecting any lock order
    */
   private void onTragicEvent(Throwable tragedy, String location) {
@@ -4958,10 +4962,10 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
    *  IndexWriter, you'll see the unused files linger.  If
    *  that's a problem, call this method to delete them
    *  (once you've closed the open readers that were
-   *  preventing their deletion). 
-   *  
-   *  <p> In addition, you can call this method to delete 
-   *  unreferenced index commits. This might be useful if you 
+   *  preventing their deletion).
+   *
+   *  <p> In addition, you can call this method to delete
+   *  unreferenced index commits. This might be useful if you
    *  are using an {@link IndexDeletionPolicy} which holds
    *  onto index commits until some criteria are met, but those
    *  commits are no longer needed. Otherwise, those commits will
@@ -4986,11 +4990,11 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     if (!directory.getCreatedFiles().isEmpty()) {
       throw new IllegalStateException("pass a clean trackingdir for CFS creation");
     }
-    
+
     if (infoStream.isEnabled("IW")) {
       infoStream.message("IW", "create compound file");
     }
-    // Now merge all added files    
+    // Now merge all added files
     boolean success = false;
     try {
       info.getCodec().compoundFormat().write(directory, info, context);
@@ -5005,7 +5009,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     // Replace all previous files with the CFS/CFE files:
     info.setFiles(new HashSet<>(directory.getCreatedFiles()));
   }
-  
+
   /**
    * Tries to delete the given files if unreferenced
    * @param files the files to delete
@@ -5103,7 +5107,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     }
     return seqNo;
   }
-  
+
   private void processEvents(boolean triggerMerge) throws IOException {
     if (tragedy.get() == null) {
      eventQueue.processEvents();
@@ -5124,7 +5128,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
     /**
      * Processes the event. This method is called by the {@link IndexWriter}
      * passed as the first argument.
-     * 
+     *
      * @param writer
      *          the {@link IndexWriter} that executes the event.
      * @throws IOException
@@ -5135,7 +5139,7 @@ public class IndexWriter implements Closeable, TwoPhaseCommit, Accountable,
 
   /** Anything that will add N docs to the index should reserve first to
    *  make sure it's allowed.  This will throw {@code
-   *  IllegalArgumentException} if it's not allowed. */ 
+   *  IllegalArgumentException} if it's not allowed. */
   private void reserveDocs(long addedNumDocs) {
     assert addedNumDocs >= 0;
     if (adjustPendingNumDocs(addedNumDocs) > actualMaxDocs) {

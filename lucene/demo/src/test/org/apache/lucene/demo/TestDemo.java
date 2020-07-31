@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.apache.lucene.util.LuceneTestCase;
 
@@ -43,7 +44,8 @@ public class TestDemo extends LuceneTestCase {
 
   public void testIndexSearch() throws Exception {
     Path dir = getDataPath("test-files/docs");
-    Path indexDir = createTempDir("ContribDemoTest");
+//    Path indexDir = createTempDir("ContribDemoTest");
+    Path indexDir = Paths.get("/Users/wangqi/Documents/工作目录/Git_repository/lucene-solr/lucene/demo/build/tmp/tests-tmp");
     IndexFiles.main(new String[] { "-create", "-docs", dir.toString(), "-index", indexDir.toString()});
     testOneSearch(indexDir, "apache", 3);
     testOneSearch(indexDir, "patent", 8);
