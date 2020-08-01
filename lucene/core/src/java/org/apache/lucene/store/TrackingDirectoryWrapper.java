@@ -26,7 +26,7 @@ import java.util.Set;
  *  written to and deleted. */
 public final class TrackingDirectoryWrapper extends FilterDirectory {
 
-  private final Set<String> createdFileNames = Collections.synchronizedSet(new HashSet<String>());
+  private final Set<String> createdFileNames = Collections.synchronizedSet(new HashSet<>());
 
   public TrackingDirectoryWrapper(Directory in) {
     super(in);

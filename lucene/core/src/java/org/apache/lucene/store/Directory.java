@@ -43,6 +43,9 @@ import org.apache.lucene.util.IOUtils;
  *   must throw {@link java.nio.file.FileAlreadyExistsException}.</li>
  * </ul>
  *
+ * {@code Directory}是存储索引文件的一个抽象层。
+ * 具体的索引文件目录不能包含子文件夹，只能包含文件。
+ *
  * @see FSDirectory
  * @see ByteBuffersDirectory
  * @see FilterDirectory

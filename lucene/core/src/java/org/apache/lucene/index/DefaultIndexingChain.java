@@ -386,6 +386,7 @@ final class DefaultIndexingChain extends DocConsumer {
 
     // How many indexed field names we've seen (collapses
     // multiple field instances by the same name):
+    // 记录处理的索引字段名数量，相同字段名的多个字段实例会被自动折叠
     int fieldCount = 0;
 
     long fieldGen = nextFieldGen++;

@@ -33,7 +33,11 @@ import org.apache.lucene.util.RamUsageEstimator;
  *  deletes and updates against the to-be-flushed segment.  Once the
  *  deletes and updates are pushed (on flush in DocumentsWriter), they
  *  are converted to a {@link FrozenBufferedUpdates} instance and
- *  pushed to the {@link BufferedUpdatesStream}. */
+ *  pushed to the {@link BufferedUpdatesStream}.
+ *
+ *  持有缓冲的删除和修改数据，修改是根据docID，删除是根据term和query，修改和
+ *  删除都是对于单个segment。
+ */
 
 // NOTE: instances of this class are accessed either via a private
 // instance on DocumentWriterPerThread, or via sync'd code by
@@ -62,7 +66,7 @@ class BufferedUpdates implements Accountable {
   final AtomicInteger numTermDeletes = new AtomicInteger();
   final AtomicInteger numFieldUpdates = new AtomicInteger();
 
-  final Map<Term,Integer> deleteTerms = new HashMap<>(); // TODO cut this over to FieldUpdatesBuffer
+  final Map<Term,Integer> deleteTerms = new HashMap<>(); // TODO cut this over to FieldUpdatesBuffer 切换到 FieldUpdatesBuffer
   final Map<Query,Integer> deleteQueries = new HashMap<>();
 
   final Map<String, FieldUpdatesBuffer> fieldUpdates = new HashMap<>();

@@ -444,10 +444,17 @@ final class DocumentsWriterFlushControl implements Accountable, Closeable {
         // since it has the current delete queue associated with it. This means we have established a happens-before
         // relationship and all docs indexed into this DWPT are guaranteed to not be flushed with the currently
         // progress full flush.
+        /*
+         * 简单地返回DWPT，即使在flush all场景中，因为此时已经获取了lock且这个DWPT不是新创建的，因为
+         * DWPT会与delete queue绑定，delete queue是DWPT的构造器入参，且DWPT的deleteQueue参数是final。
+         * 这意味着已经有一个happens-before关系，所有的索引进DWPT的文档已经被确保了不会被当前正在
+         * 处理的full flush刷新到磁盘。
+         */
         return perThread;
       } else {
         try {
           // we must first assert otherwise the full flush might make progress once we unlock the dwpt
+          // 必须先断言防止full flush期间我们对dwpt进行unlock
           assert fullFlush && fullFlushMarkDone == false :
               "found a stale DWPT but full flush mark phase is already done fullFlush: "
                   + fullFlush  + " markDone: " + fullFlushMarkDone;
@@ -455,6 +462,7 @@ final class DocumentsWriterFlushControl implements Accountable, Closeable {
           perThread.unlock();
           // There is a flush-all in process and this DWPT is
           // now stale - try another one
+          // 说明有一个flush-all在进行中，这个dwpt是老旧的，尝试下一个
         }
       }
     }

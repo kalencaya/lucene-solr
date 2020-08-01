@@ -106,6 +106,9 @@ final class DocumentsWriterPerThreadPool implements Iterable<DocumentsWriterPerT
   // of items (docs, deletes, DV updates) to most take advantage of concurrency while flushing
 
   /** This method is used by DocumentsWriter/FlushControl to obtain a DWPT to do an indexing operation (add/updateDocument). */
+  /**
+   * 返回的dwpt对像都是被lock的
+   */
   DocumentsWriterPerThread getAndLock() throws IOException {
     synchronized (this) {
       if (closed) {

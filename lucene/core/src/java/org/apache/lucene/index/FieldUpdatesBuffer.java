@@ -40,6 +40,8 @@ import org.apache.lucene.util.RamUsageEstimator;
  * In other cases each update will likely have a different docUpTo.
  * Along the same lines this impl optimizes the case when all updates have a value. Lastly, if all updates share the
  * same value for a numeric field we only store the value once.
+ * 这个类有效地在内存中缓冲数值和二进制field更新，存储terms、values和metadata，而不需要创建非常多地对象。
+ *
  */
 final class FieldUpdatesBuffer {
   private static final long SELF_SHALLOW_SIZE = RamUsageEstimator.shallowSizeOfInstance(FieldUpdatesBuffer.class);

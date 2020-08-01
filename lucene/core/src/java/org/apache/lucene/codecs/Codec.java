@@ -35,6 +35,9 @@ import org.apache.lucene.util.NamedSPILoader;
  * <p>
  * If you implement your own codec, make sure that it has a no-arg constructor
  * so SPI can load it.
+ *
+ * 子类实现使用SPI机制进行加载。编码类需实现{@link #getName}方法，编码类的name会被
+ * 写入索引文件，在读取索引时会使用索引文件中的name查找对应的编码类。
  * @see ServiceLoader
  */
 public abstract class Codec implements NamedSPILoader.NamedSPI {
